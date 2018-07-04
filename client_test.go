@@ -75,7 +75,7 @@ var _ = Describe("Client", func() {
 
 	AfterEach(func() {
 		if s, ok := cl.session.(*session); ok {
-			s.Close(nil)
+			s.Close()
 		}
 		Eventually(areSessionsRunning).Should(BeFalse())
 	})
@@ -235,7 +235,7 @@ var _ = Describe("Client", func() {
 				close(dialed)
 			}()
 			Consistently(dialed).ShouldNot(BeClosed())
-			sess.EXPECT().Close(nil)
+			sess.EXPECT().Close()
 			cancel()
 			Eventually(dialed).Should(BeClosed())
 		})
@@ -472,7 +472,7 @@ var _ = Describe("Client", func() {
 				sess1 := NewMockQuicSession(mockCtrl)
 				run1 := make(chan struct{})
 				sess1.EXPECT().run().Do(func() { <-run1 }).Return(errCloseSessionForNewVersion)
-				sess1.EXPECT().Close(errCloseSessionForNewVersion).Do(func(error) { close(run1) })
+				sess1.EXPECT().destroy(errCloseSessionForNewVersion).Do(func(error) { close(run1) })
 				sess2 := NewMockQuicSession(mockCtrl)
 				sess2.EXPECT().run()
 				sessionChan := make(chan *MockQuicSession, 2)
@@ -515,7 +515,7 @@ var _ = Describe("Client", func() {
 				sess1 := NewMockQuicSession(mockCtrl)
 				run1 := make(chan struct{})
 				sess1.EXPECT().run().Do(func() { <-run1 }).Return(errCloseSessionForNewVersion)
-				sess1.EXPECT().Close(errCloseSessionForNewVersion).Do(func(error) { close(run1) })
+				sess1.EXPECT().destroy(errCloseSessionForNewVersion).Do(func(error) { close(run1) })
 				sess2 := NewMockQuicSession(mockCtrl)
 				sess2.EXPECT().run()
 				sessionChan := make(chan *MockQuicSession, 2)
@@ -555,7 +555,7 @@ var _ = Describe("Client", func() {
 
 			It("errors if no matching version is found", func() {
 				sess := NewMockQuicSession(mockCtrl)
-				sess.EXPECT().Close(gomock.Any())
+				sess.EXPECT().destroy(qerr.InvalidVersion)
 				cl.session = sess
 				cl.config = &Config{Versions: protocol.SupportedVersions}
 				cl.handleRead(nil, wire.ComposeGQUICVersionNegotiation(connID, []protocol.VersionNumber{1}))
@@ -563,7 +563,7 @@ var _ = Describe("Client", func() {
 
 			It("errors if the version is supported by quic-go, but disabled by the quic.Config", func() {
 				sess := NewMockQuicSession(mockCtrl)
-				sess.EXPECT().Close(gomock.Any())
+				sess.EXPECT().destroy(qerr.InvalidVersion)
 				cl.session = sess
 				v := protocol.VersionNumber(1234)
 				Expect(v).ToNot(Equal(cl.version))
@@ -573,7 +573,7 @@ var _ = Describe("Client", func() {
 
 			It("changes to the version preferred by the quic.Config", func() {
 				sess := NewMockQuicSession(mockCtrl)
-				sess.EXPECT().Close(errCloseSessionForNewVersion)
+				sess.EXPECT().destroy(errCloseSessionForNewVersion)
 				cl.session = sess
 				config := &Config{Versions: []protocol.VersionNumber{1234, 4321}}
 				cl.config = config
@@ -855,7 +855,7 @@ var _ = Describe("Client", func() {
 
 			Consistently(done).ShouldNot(BeClosed())
 			// make the go routine return
-			sess.EXPECT().Close(gomock.Any())
+			sess.EXPECT().destroy(gomock.Any())
 			Expect(packetConn.Close()).To(Succeed())
 			Eventually(done).Should(BeClosed())
 		})
@@ -863,7 +863,7 @@ var _ = Describe("Client", func() {
 		It("closes the session when encountering an error while reading from the connection", func() {
 			testErr := errors.New("test error")
 			sess := NewMockQuicSession(mockCtrl)
-			sess.EXPECT().Close(testErr)
+			sess.EXPECT().destroy(testErr)
 			cl.session = sess
 			packetConn.readErr = testErr
 			cl.listen()

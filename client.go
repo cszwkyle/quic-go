@@ -339,8 +339,8 @@ func (c *client) establishSecureConnection(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		// The session sending a PeerGoingAway error to the server.
-		c.session.Close(nil)
+		// The session will send a PeerGoingAway error to the server.
+		c.session.Close()
 		return ctx.Err()
 	case err := <-errorChan:
 		return err
@@ -367,7 +367,7 @@ func (c *client) listen() {
 			if !strings.HasSuffix(err.Error(), "use of closed network connection") {
 				c.mutex.Lock()
 				if c.session != nil {
-					c.session.Close(err)
+					c.session.destroy(err)
 				}
 				c.mutex.Unlock()
 			}
@@ -421,7 +421,7 @@ func (c *client) handlePacketImpl(p *receivedPacket) error {
 
 		// version negotiation packets have no payload
 		if err := c.handleVersionNegotiationPacket(p.header); err != nil {
-			c.session.Close(err)
+			c.session.destroy(err)
 		}
 		return nil
 	}
@@ -526,7 +526,7 @@ func (c *client) handleVersionNegotiationPacket(hdr *wire.Header) error {
 	c.generateConnectionIDs()
 
 	c.logger.Infof("Switching to QUIC version %s. New connection ID: %s", newVersion, c.destConnID)
-	c.session.Close(errCloseSessionForNewVersion)
+	c.session.destroy(errCloseSessionForNewVersion)
 	return nil
 }
 
@@ -578,13 +578,13 @@ func (c *client) createNewTLSSession(
 	return err
 }
 
-func (c *client) Close(err error) error {
+func (c *client) Close() error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	if c.session == nil {
 		return nil
 	}
-	return c.session.Close(err)
+	return c.session.Close()
 }
 
 func (c *client) GetVersion() protocol.VersionNumber {
