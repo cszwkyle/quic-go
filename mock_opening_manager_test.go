@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	handshake "github.com/lucas-clemente/quic-go/internal/handshake"
+	crypto "github.com/lucas-clemente/quic-go/internal/crypto"
 )
 
 // MockOpeningManager is a mock of OpeningManager interface
@@ -35,9 +35,9 @@ func (m *MockOpeningManager) EXPECT() *MockOpeningManagerMockRecorder {
 }
 
 // Get1RTTOpener mocks base method
-func (m *MockOpeningManager) Get1RTTOpener() (handshake.Opener, error) {
+func (m *MockOpeningManager) Get1RTTOpener() (crypto.Opener, error) {
 	ret := m.ctrl.Call(m, "Get1RTTOpener")
-	ret0, _ := ret[0].(handshake.Opener)
+	ret0, _ := ret[0].(crypto.Opener)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -48,9 +48,9 @@ func (mr *MockOpeningManagerMockRecorder) Get1RTTOpener() *gomock.Call {
 }
 
 // GetHandshakeOpener mocks base method
-func (m *MockOpeningManager) GetHandshakeOpener() handshake.Opener {
+func (m *MockOpeningManager) GetHandshakeOpener() crypto.Opener {
 	ret := m.ctrl.Call(m, "GetHandshakeOpener")
-	ret0, _ := ret[0].(handshake.Opener)
+	ret0, _ := ret[0].(crypto.Opener)
 	return ret0
 }
 

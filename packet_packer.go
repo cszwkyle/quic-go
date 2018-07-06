@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/lucas-clemente/quic-go/internal/ackhandler"
-	"github.com/lucas-clemente/quic-go/internal/handshake"
+	"github.com/lucas-clemente/quic-go/internal/crypto"
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/utils"
 	"github.com/lucas-clemente/quic-go/internal/wire"
@@ -34,9 +34,9 @@ func (p *packedPacket) ToAckHandlerPacket() *ackhandler.Packet {
 }
 
 type sealingManager interface {
-	GetSealer() (protocol.EncryptionLevel, handshake.Sealer)
-	GetSealerForCryptoStream() (protocol.EncryptionLevel, handshake.Sealer)
-	GetSealerWithEncryptionLevel(protocol.EncryptionLevel) (handshake.Sealer, error)
+	GetSealer() (protocol.EncryptionLevel, crypto.Sealer)
+	GetSealerForCryptoStream() (protocol.EncryptionLevel, crypto.Sealer)
+	GetSealerWithEncryptionLevel(protocol.EncryptionLevel) (crypto.Sealer, error)
 }
 
 type streamFrameSource interface {
@@ -490,7 +490,7 @@ func (p *packetPacker) getHeader(encLevel protocol.EncryptionLevel) *wire.Header
 func (p *packetPacker) writeAndSealPacket(
 	header *wire.Header,
 	payloadFrames []wire.Frame,
-	sealer handshake.Sealer,
+	sealer crypto.Sealer,
 ) ([]byte, error) {
 	raw := *getPacketBuffer()
 	buffer := bytes.NewBuffer(raw[:0])

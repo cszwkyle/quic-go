@@ -9,18 +9,6 @@ import (
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 )
 
-// Sealer seals a packet
-type Sealer interface {
-	Seal(dst, src []byte, packetNumber protocol.PacketNumber, associatedData []byte) []byte
-	Overhead() int
-}
-
-// Opener opens a packet
-// Only used for IETF QUIC.
-type Opener interface {
-	Open(dst, src []byte, packetNumber protocol.PacketNumber, associatedData []byte) ([]byte, error)
-}
-
 // A TLSExtensionHandler sends and received the QUIC TLS extension.
 // It provides the parameters sent by the peer on a channel.
 type TLSExtensionHandler interface {
@@ -45,9 +33,9 @@ type baseCryptoSetup interface {
 	HandleCryptoStream() error
 	ConnectionState() ConnectionState
 
-	GetSealer() (protocol.EncryptionLevel, Sealer)
-	GetSealerWithEncryptionLevel(protocol.EncryptionLevel) (Sealer, error)
-	GetSealerForCryptoStream() (protocol.EncryptionLevel, Sealer)
+	GetSealer() (protocol.EncryptionLevel, crypto.Sealer)
+	GetSealerWithEncryptionLevel(protocol.EncryptionLevel) (crypto.Sealer, error)
+	GetSealerForCryptoStream() (protocol.EncryptionLevel, crypto.Sealer)
 }
 
 // CryptoSetup is the crypto setup used by gQUIC
@@ -61,8 +49,8 @@ type CryptoSetup interface {
 type CryptoSetupTLS interface {
 	baseCryptoSetup
 
-	GetHandshakeOpener() Opener
-	Get1RTTOpener() (Opener, error)
+	GetHandshakeOpener() crypto.Opener
+	Get1RTTOpener() (crypto.Opener, error)
 }
 
 // ConnectionState records basic details about the QUIC connection.

@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/lucas-clemente/quic-go/internal/ackhandler"
+	"github.com/lucas-clemente/quic-go/internal/crypto"
 	"github.com/lucas-clemente/quic-go/internal/handshake"
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/wire"
@@ -21,7 +22,7 @@ func (s *mockSealer) Seal(dst, src []byte, packetNumber protocol.PacketNumber, a
 
 func (s *mockSealer) Overhead() int { return 12 }
 
-var _ handshake.Sealer = &mockSealer{}
+var _ crypto.Sealer = &mockSealer{}
 
 type mockCryptoSetup struct {
 	handleErr          error
@@ -38,13 +39,13 @@ func (m *mockCryptoSetup) HandleCryptoStream() error {
 func (m *mockCryptoSetup) Open(dst, src []byte, packetNumber protocol.PacketNumber, associatedData []byte) ([]byte, protocol.EncryptionLevel, error) {
 	return nil, protocol.EncryptionUnspecified, nil
 }
-func (m *mockCryptoSetup) GetSealer() (protocol.EncryptionLevel, handshake.Sealer) {
+func (m *mockCryptoSetup) GetSealer() (protocol.EncryptionLevel, crypto.Sealer) {
 	return m.encLevelSeal, &mockSealer{}
 }
-func (m *mockCryptoSetup) GetSealerForCryptoStream() (protocol.EncryptionLevel, handshake.Sealer) {
+func (m *mockCryptoSetup) GetSealerForCryptoStream() (protocol.EncryptionLevel, crypto.Sealer) {
 	return m.encLevelSealCrypto, &mockSealer{}
 }
-func (m *mockCryptoSetup) GetSealerWithEncryptionLevel(protocol.EncryptionLevel) (handshake.Sealer, error) {
+func (m *mockCryptoSetup) GetSealerWithEncryptionLevel(protocol.EncryptionLevel) (crypto.Sealer, error) {
 	return &mockSealer{}, nil
 }
 func (m *mockCryptoSetup) SetDiversificationNonce(divNonce []byte) error {

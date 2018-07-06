@@ -3,7 +3,7 @@ package quic
 import (
 	"bytes"
 
-	"github.com/lucas-clemente/quic-go/internal/handshake"
+	"github.com/lucas-clemente/quic-go/internal/crypto"
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/utils"
 	"github.com/lucas-clemente/quic-go/internal/wire"
@@ -20,8 +20,8 @@ type gQUICAEAD interface {
 }
 
 type openingManager interface {
-	GetHandshakeOpener() handshake.Opener
-	Get1RTTOpener() (handshake.Opener, error)
+	GetHandshakeOpener() crypto.Opener
+	Get1RTTOpener() (crypto.Opener, error)
 }
 
 type packetUnpackerBase struct {
@@ -120,7 +120,7 @@ func (u *packetUnpacker) Unpack(hdr *wire.Header, data []byte) (*unpackedPacket,
 		decrypted, err = opener.Open(buf, data[hdr.ParsedLen:], hdr.PacketNumber, data[:hdr.ParsedLen])
 		encryptionLevel = protocol.EncryptionUnencrypted
 	} else {
-		var opener handshake.Opener
+		var opener crypto.Opener
 		opener, err = u.openers.Get1RTTOpener()
 		if err == nil {
 			decrypted, err = opener.Open(buf, data[hdr.ParsedLen:], hdr.PacketNumber, data[:hdr.ParsedLen])
